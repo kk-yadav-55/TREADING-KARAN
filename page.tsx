@@ -1,0 +1,22 @@
+ "use client";
+import {useEffect,useState} from "react";
+import {LineChart,Line,XAxis,YAxis,Tooltip,ResponsiveContainer,CartesianGrid} from "recharts";
+const symbols=["NIFTY 50","BANK NIFTY","TATA MOTORS","RELIANCE","HDFC BANK"];
+type Range="1D"|"1W"|"1M";
+function data(sym:string,r:Range){let p=100+(sym.length*17),a=[];let n=r==="1D"?72:r==="1W"?84:90;for(let i=0;i<n;i++){p=Math.max(20,p+Math.sin(i/4)*1.7+(Math.random()-.5)*4);a.push({time:r==="1D"?`${String(Math.floor(i/3)%24).padStart(2,"0")}:${String((i%3)*20).padStart(2,"0")}`:`${i+1} ${r==="1W"?"days":"days"}`,price:+p.toFixed(2)})}return a}
+export default function Home(){
+ const [login,setLogin]=useState(false),[user,setUser]=useState(""),[symbol,setSymbol]=useState("NIFTY 50"),[range,setRange]=useState<Range>("1D"),[balance,setBalance]=useState(10000),[qty,setQty]=useState(1),[orders,setOrders]=useState<any[]>([]),[dark,setDark]=useState(true),[notice,setNotice]=useState("");
+ const [chart,setChart]=useState<any[]>([]);
+ useEffect(()=>setChart(data(symbol,range)),[symbol,range]);
+ const price=chart.at(-1)?.price||0;
+ const pnl=orders.reduce((s,o)=>s+(o.side==="BUY"?(price-o.entry):(o.entry-price))*o.qty,0);
+ const note=(x:string)=>{setNotice(x);setTimeout(()=>setNotice(""),2200)};
+ const trade=(side:"BUY"|"SELL")=>{if(price*qty>balance){note("Demo balance insufficient");return}setBalance(v=>v-price*qty);setOrders(v=>[...v,{side,qty,entry:price}]);note(`${side} simulated at ₹${price.toFixed(2)}`)};
+ if(!login)return <div className="login"><div className="card"><div className="brand">👤 𝐓ʀᴇᴅᴀʀ 𝐊ᴀʀᴀɴ</div><div className="demo">PAPER TRADING · DEMO ONLY</div><h1>Market Simulator</h1><p>Practice with virtual money. No real deposits or orders.</p><input placeholder="Username" value={user} onChange={e=>setUser(e.target.value)}/><input type="password" placeholder="Password"/><button className="primary" onClick={()=>setLogin(true)}>Login to Demo</button><button className="ghost" onClick={()=>setLogin(true)}>Continue as Guest</button><small>Starting virtual balance: ₹10,000</small></div></div>;
+ return <div className={dark?"app dark":"app light"}><header><div className="brand">👤 𝐓ʀᴇᴅᴀʀ 𝐊ᴀʀᴀɴ</div><span>Owner: 𝐊ᴀʀᴀɴ 𝐘ᴀᴅᴀᴠ 😎</span><nav><button onClick={()=>setDark(!dark)}>{dark?"☀️":"🌙"}</button><button onClick={()=>setLogin(false)}>Logout</button></nav></header>
+ <main><aside><div className="balance"><small>DEMO BALANCE</small><b>₹{balance.toLocaleString("en-IN",{minimumFractionDigits:2})}</b><em>Virtual funds only</em></div><h3>Watchlist</h3>{symbols.map(s=><button className={symbol===s?"stock active":"stock"} onClick={()=>setSymbol(s)} key={s}>{s}<b>₹{(data(s,"1D").at(-1)?.price||0).toFixed(2)}</b></button>)}<button className="reset" onClick={()=>{setBalance(10000);setOrders([]);note("Balance reset to ₹10,000")}}>↻ Reset Demo</button></aside>
+ <section><div className="top"><div><h2>{symbol}</h2><small>Simulated market chart · Demo only</small></div><div className="quote">₹{price.toFixed(2)}<small className={pnl>=0?"up":"down"}>{pnl>=0?"+":"-"}₹{Math.abs(pnl).toFixed(2)} P/L</small></div></div>
+ <div className="chart"><div className="ranges">{(["1D","1W","1M"] as Range[]).map(r=><button className={range===r?"sel":""} onClick={()=>setRange(r)} key={r}>{r}</button>)}</div><ResponsiveContainer width="100%" height="100%"><LineChart data={chart}><CartesianGrid strokeDasharray="3 3" opacity={dark?.16:.3}/><XAxis dataKey="time" minTickGap={30}/><YAxis domain={["auto","auto"]}/><Tooltip/><Line type="monotone" dataKey="price" stroke={dark?"#f59e0b":"#111"} strokeWidth={2.5} dot={false}/></LineChart></ResponsiveContainer></div>
+ <div className="trade"><label>Quantity<input type="number" min="1" value={qty} onChange={e=>setQty(Math.max(1,+e.target.value||1))}/></label><button className="buy" onClick={()=>trade("BUY")}>BUY / LONG</button><button className="sell" onClick={()=>trade("SELL")}>SELL / SHORT</button></div>
+ <div className="orders"><h3>Open Demo Positions</h3>{orders.length?orders.map((o,i)=><div className="order" key={i}><b>{o.side}</b><span>{o.qty} × {symbol}</span><span>Entry ₹{o.entry.toFixed(2)}</span><span className={((o.side==="BUY"?price-o.entry:o.entry-price)*o.qty)>=0?"up":"down"}>₹{((o.side==="BUY"?price-o.entry:o.entry-price)*o.qty).toFixed(2)}</span></div>):<p>No paper positions yet.</p>}</div></section></main><footer>© 2026 𝐓ʀᴇᴅᴀʀ 𝐊ᴀʀᴀɴ · DEMO PAPER TRADING ONLY</footer>{notice&&<div className="toast">{notice}</div>}</div>
+}
