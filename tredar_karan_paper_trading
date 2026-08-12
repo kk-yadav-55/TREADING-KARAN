@@ -1,0 +1,8 @@
+📁 app
+   ├── page.tsx
+   ├── layout.tsx
+   └── globals.css
+
+📄 package.json
+📄 tsconfig.json
+📄 next-env.d.ts
